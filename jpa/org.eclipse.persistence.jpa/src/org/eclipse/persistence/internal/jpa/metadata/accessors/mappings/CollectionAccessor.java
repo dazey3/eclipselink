@@ -562,7 +562,7 @@ public abstract class CollectionAccessor extends RelationshipAccessor implements
 
             if (m_referenceClass.isVoid()) {
                 // This call will attempt to extract the reference class from generics.
-                m_referenceClass = getReferenceClassFromGeneric();
+                m_referenceClass = super.getReferenceClass();
 
                 if (m_referenceClass == null) {
                     // Throw an exception. A relationship accessor must have a

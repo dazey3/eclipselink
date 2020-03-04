@@ -460,7 +460,7 @@ public abstract class DirectCollectionAccessor extends DirectAccessor {
         // value. If none is found then we'll look for a JPA converter, that
         // is, Enumerated, Lob and Temporal. With everything falling into
         // a serialized mapping if no converter whatsoever is found.
-        processMappingValueConverter(mapping, getValueConverter(), getConverts(), getReferenceClass(), getReferenceClassWithGenerics());
+        processMappingValueConverter(mapping, getValueConverter(), getConverts(), getReferenceClass());
     }
 
     /**
@@ -507,7 +507,7 @@ public abstract class DirectCollectionAccessor extends DirectAccessor {
         }
 
         // Process a converter for value column of this mapping.
-        processMappingValueConverter(mapping, getValueConverter(), getConverts(), getReferenceClass(), getReferenceClassWithGenerics());
+        processMappingValueConverter(mapping, getValueConverter(), getConverts(), getReferenceClass());
     }
 
     /**

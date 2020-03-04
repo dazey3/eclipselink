@@ -71,7 +71,7 @@ public class TypeVisitor<R, P> extends SimpleTypeVisitor6<MetadataAnnotatedEleme
 
         // Set the generic types. Internally EclipseLink wants the class name
         // in the 0 position of the generic list.
-        annotatedElement.addGenericType(cls.getName());
+//        annotatedElement.addGenericType(cls.getName());
 
         for (TypeMirror typeArgument : declaredType.getTypeArguments()) {
             // Set the type from the metadata class as it may be a generic and

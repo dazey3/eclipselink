@@ -168,15 +168,6 @@ public class BasicMapAccessor extends BasicCollectionAccessor {
 
     /**
      * INTERNAL:
-     * Return the reference class for this accessor.
-     */
-    @Override
-    public MetadataClass getReferenceClass() {
-        return getReferenceClassFromGeneric();
-    }
-
-    /**
-     * INTERNAL:
      * Used for OX mapping.
      */
     @Override

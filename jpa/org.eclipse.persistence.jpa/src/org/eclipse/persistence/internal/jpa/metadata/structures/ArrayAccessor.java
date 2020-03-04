@@ -164,7 +164,7 @@ public class ArrayAccessor extends DirectAccessor {
 
             if (m_referenceClass == null || m_referenceClass.isVoid()) {
                 // This call will attempt to extract the reference class from generics.
-                m_referenceClass = getReferenceClassFromGeneric();
+                m_referenceClass = super.getReferenceClass();
 
                 if (m_referenceClass == null) {
                     // 266912: We do not handle the resolution of parameterized

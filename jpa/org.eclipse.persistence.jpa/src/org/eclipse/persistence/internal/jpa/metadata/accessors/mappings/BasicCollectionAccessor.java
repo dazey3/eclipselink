@@ -179,7 +179,7 @@ public class BasicCollectionAccessor extends DirectCollectionAccessor {
      */
     @Override
     public MetadataClass getReferenceClass() {
-        MetadataClass cls = getReferenceClassFromGeneric();
+        MetadataClass cls = super.getReferenceClass();
         return (cls == null) ? getMetadataClass(void.class) : cls;
     }
 
@@ -189,10 +189,10 @@ public class BasicCollectionAccessor extends DirectCollectionAccessor {
      * class to support an auto-apply jpa converter. Per the spec auto-apply
      * converters are applied against basics only.
      */
-    @Override
-    public MetadataClass getReferenceClassWithGenerics() {
-        return getReferenceClass();
-    }
+//    @Override
+//    public MetadataClass getReferenceClassWithGenerics() {
+//        return getReferenceClass();
+//    }
 
     /**
      * INTERNAL:

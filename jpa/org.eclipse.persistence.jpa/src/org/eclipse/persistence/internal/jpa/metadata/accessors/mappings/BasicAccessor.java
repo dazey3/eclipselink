@@ -432,7 +432,7 @@ public class BasicAccessor extends DirectAccessor {
         // converter, that is, Convert, Enumerated, Lob and Temporal. With
         // everything falling into a serialized mapping if no converter
         // whatsoever is found.
-        processMappingValueConverter(mapping, getConvert(), getConverts(), getReferenceClass(), getReferenceClassWithGenerics());
+        processMappingValueConverter(mapping, getConvert(), getConverts(), getReferenceClass());
 
         // Process a mutable setting.
         if (m_mutable != null) {

@@ -109,9 +109,6 @@ public class MetadataAnnotatedElement extends MetadataAccessibleObject {
     /** Used to cache the type metadata class, but cannot be cached in the case of generics. */
     private MetadataClass m_rawClass;
 
-    /** Used to cache the full type metadata class including some generic specifications. */
-    private MetadataClass m_rawClassWithGenerics;
-
     /**
      * Defines the generic types of the elements type.
      * This is null if no generics are used.
@@ -303,11 +300,12 @@ public class MetadataAnnotatedElement extends MetadataAccessibleObject {
     public MetadataClass getMapKeyClass(MetadataDescriptor descriptor) {
         if (isGenericCollectionType()) {
             // The Map key may be a generic itself, or just the class value.
-            String type = descriptor.getGenericType(m_genericType.get(2));
+            //TODO: Double check Map type
+            String type = descriptor.getGenericType(m_genericType.get(1));
             if (type != null) {
                 return getMetadataClass(type);
             }
-            return getMetadataClass(m_genericType.get(1));
+            return getMetadataClass(m_genericType.get(0));
         } else {
             return null;
         }
@@ -342,8 +340,6 @@ public class MetadataAnnotatedElement extends MetadataAccessibleObject {
      * Return the raw class for this accessible object. E.g. For an
      * accessible object with a type of java.util.Collection&lt;Employee&gt;, this
      * method will return java.util.Collection.
-     * @see #getReferenceClassFromGeneric(MetadataDescriptor) to get Employee.class back.
-     * @see #getRawClassWithGenerics(MetadataDescriptor) to get java.util.CollectionEmployee back.
      */
     public MetadataClass getRawClass(MetadataDescriptor descriptor) {
         if (m_rawClass == null) {
@@ -360,107 +356,52 @@ public class MetadataAnnotatedElement extends MetadataAccessibleObject {
                     // if returning null here would be better? Forcing the
                     // caller to have a plan B in place.
                     // @see e.g. RelationshipAccessor.getReferenceDescriptor()
-                    return getMetadataClass(DEFAULT_RAW_CLASS);
+                    m_rawClass = getMetadataClass(DEFAULT_RAW_CLASS);
+                } else {
+                    m_rawClass = getMetadataClass(type);
                 }
-                return getMetadataClass(type);
+            } else {
+                m_rawClass = getMetadataClass(getType());
             }
-            return getMetadataClass(getType());
+//
+//            // TODO: investigate multiple levels of generics.
+//            if (isGenericCollectionType()) {
+//                // TODO: This is guessing, need to be more logical.
+//                // Collection<String> -> [Collection, String], get element class.
+//                String elementClass = m_genericType.get(1);
+//                if (m_genericType.size() > 2) {
+//                    MetadataClass collectionClass = getMetadataClass(m_genericType.get(0));
+//                    if (collectionClass.extendsInterface(Map.class)) {
+//                        // If size is greater than 4 then assume it is a double generic Map,
+//                        // Map<T, Phone> -> [Map, T, Z, T, X]
+//                        if (m_genericType.size() > 4) {
+//                            elementClass = m_genericType.get(4);
+//                        } else if (m_genericType.size() == 4) {
+//                            // If size is greater than 3 then assume it is a generic Map,
+//                            // Map<T, Phone> -> [Map, T, Z, Phone]
+//                            elementClass = m_genericType.get(3);
+//                        } else if (m_genericType.size() == 3) {
+//                            // If size is greater than 2 then assume it is a Map,
+//                            // Map<String, Phone> -> [Map, String, Phone]
+//                            elementClass = m_genericType.get(2);
+//                        }
+//                    } else if (elementClass.length() == 1) {
+//                        // Assume Collection with a generic,
+//                        // Collection<T> -> [Collection T Z]
+//                        elementClass = m_genericType.get(2);
+//                    }
+//                }
+//            }
+
+            // Add the generic types to the metadata if they exists
+            if(getGenericType() != null) {
+                for (String type : getGenericType()) {
+                    m_rawClass.addGenericType(getMetadataClass(type));
+                }
+            }
         }
 
         return m_rawClass;
-    }
-
-    /**
-     * INTERNAL:
-     * Return the complete raw class with generics for this accessible object.
-     * E.g. For an accessible object with a type of
-     * java.util.Collection&lt;Employee&gt;, this method will return
-     * java.util.CollectionEmployee. Note, the generics are appended to the name
-     * of the class.
-     * @see #getReferenceClassFromGeneric(MetadataDescriptor) to get Employee.class back.
-     * @see #getRawClass(MetadataDescriptor) to get java.util.Collection back.
-     */
-    public MetadataClass getRawClassWithGenerics(MetadataDescriptor descriptor) {
-        if (m_rawClassWithGenerics == null) {
-            MetadataClass rawClass = getRawClass(descriptor);
-
-            if (getGenericType() != null && (! getGenericType().isEmpty()) && getGenericType().size() > 1) {
-                StringBuilder rawClassName = new StringBuilder(32);
-                rawClassName.append(rawClass.getName());
-
-                for (int i = 1; i < getGenericType().size(); i++) {
-                    rawClassName.append(getGenericType().get(i));
-                }
-
-                m_rawClassWithGenerics = getMetadataClass(rawClassName.toString());
-            } else {
-                m_rawClassWithGenerics = rawClass;
-            }
-        }
-
-        return m_rawClassWithGenerics;
-    }
-
-    /**
-     * INTERNAL:
-     * Return the reference class from the generic specification on this
-     * accessible object.
-     * Here is what you will get back from this method given the following
-     * scenarios:
-     * 1 - public Collection&lt;String&gt; getTasks() =&gt; String.class
-     * 2 - public Map&lt;String, Integer&gt; getTasks() =&gt; Integer.class
-     * 3 - public Employee getEmployee() =&gt; null
-     * 4 - public Collection getTasks() =&gt; null
-     * 5 - public Map getTasks() =&gt; null
-     * 6 - public Collection&lt;byte[]&gt; getAudio() =&gt; byte[].class
-     * 7 - public Map&lt;X,Y&gt; on a MappedSuperclass where Y is defined in the Entity superclass&lt;T&gt; =&gt; Void.class (in all bug 266912 cases)
-     */
-    public MetadataClass getReferenceClassFromGeneric(MetadataDescriptor descriptor) {
-        // TODO: investigate multiple levels of generics.
-        if (isGenericCollectionType()) {
-            // TODO: This is guessing, need to be more logical.
-            // Collection<String> -> [Collection, String], get element class.
-            String elementClass = m_genericType.get(1);
-            if (m_genericType.size() > 2) {
-                MetadataClass collectionClass = getMetadataClass(m_genericType.get(0));
-                if (collectionClass.extendsInterface(Map.class)) {
-                    // If size is greater than 4 then assume it is a double generic Map,
-                    // Map<T, Phone> -> [Map, T, Z, T, X]
-                    if (m_genericType.size() > 4) {
-                        elementClass = m_genericType.get(4);
-                    } else if (m_genericType.size() == 4) {
-                        // If size is greater than 3 then assume it is a generic Map,
-                        // Map<T, Phone> -> [Map, T, Z, Phone]
-                        elementClass = m_genericType.get(3);
-                    } else if (m_genericType.size() == 3) {
-                        // If size is greater than 2 then assume it is a Map,
-                        // Map<String, Phone> -> [Map, String, Phone]
-                        elementClass = m_genericType.get(2);
-                    }
-                } else if (elementClass.length() == 1) {
-                    // Assume Collection with a generic,
-                    // Collection<T> -> [Collection T Z]
-                    elementClass = m_genericType.get(2);
-                }
-            }
-            if (elementClass.length() == 1) {
-                // Assume is a generic type variable, find real type.
-                elementClass = descriptor.getGenericType(elementClass);
-            }
-            MetadataClass metadataClass = getMetadataClass(elementClass);
-            // 266912: We do not currently handle resolution of the parameterized
-            // generic type when the accessor is a MappedSuperclass elementClass
-            // will be null in this case so a lookup of the metadataClass will
-            // also return null on our custom descriptor
-            if (metadataClass == null && descriptor.isMappedSuperclass()) {
-                // default to Void for all use case 7 instances above
-                return new MetadataClass(getMetadataFactory(), Void.class);
-            } else {
-                return metadataClass;
-            }
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -690,7 +631,7 @@ public class MetadataAnnotatedElement extends MetadataAccessibleObject {
      */
     public boolean isOneToMany(ClassAccessor classAccessor) {
         if (isAnnotationNotPresent(JPA_ONE_TO_MANY, classAccessor) && ! classAccessor.excludeDefaultMappings()) {
-            if (isGenericCollectionType() && isSupportedToManyCollectionClass(getRawClass(classAccessor.getDescriptor())) && classAccessor.getProject().hasEntity(getReferenceClassFromGeneric(classAccessor.getDescriptor()))) {
+            if (isGenericCollectionType() && isSupportedToManyCollectionClass(getRawClass(classAccessor.getDescriptor())) && classAccessor.getProject().hasEntity(getRawClass(classAccessor.getDescriptor()))) {
                 getLogger().logConfigMessage(MetadataLogger.ONE_TO_MANY_MAPPING, this);
                 return true;
             }

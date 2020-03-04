@@ -72,6 +72,9 @@ public class MetadataClass extends MetadataAnnotatedElement {
     protected MetadataClass m_superclass;
     protected String m_superclassName;
 
+    // Store the generic types
+    protected List<MetadataClass> m_genericTypes;
+
     /**
      * Create the metadata class with the class name.
      */
@@ -125,6 +128,17 @@ public class MetadataClass extends MetadataAnnotatedElement {
         }
 
         m_fields.put(field.getName(), field);
+    }
+
+    /**
+     * INTERNAL:
+     */
+    public void addGenericType(MetadataClass genericClass) {
+        if (m_genericTypes == null) {
+            m_genericTypes = new ArrayList<MetadataClass>();
+        }
+
+        m_genericTypes.add(genericClass);
     }
 
     /**
@@ -285,6 +299,18 @@ public class MetadataClass extends MetadataAnnotatedElement {
         }
 
         return m_fields;
+    }
+
+    /**
+     * INTERNAL:
+     * Return the list of generic types defined within this metadata class.
+     */
+    public List<MetadataClass> getGenericTypes() {
+        if (m_genericTypes == null) {
+            m_genericTypes = new ArrayList<MetadataClass>();
+        }
+
+        return m_genericTypes;
     }
 
     /**
