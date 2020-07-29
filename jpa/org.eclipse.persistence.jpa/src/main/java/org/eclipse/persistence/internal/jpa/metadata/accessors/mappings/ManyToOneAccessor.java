@@ -118,7 +118,7 @@ public class ManyToOneAccessor extends ObjectAccessor {
 
     /**
      * INTERNAL:
-     * Process a many to one setting into an EclipseLink OneToOneMapping.
+     * Process a many to one setting into an EclipseLink ManyToOneMapping.
      */
     @Override
     public void process() {

@@ -432,9 +432,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     public String getAttributeName() {
         if (hasAccessMethods()) {
             return getName();
-        } else {
-            return getAccessibleObject().getAttributeName();
         }
+        return getAccessibleObject().getAttributeName();
     }
 
     /**
@@ -547,9 +546,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     protected List<ConvertMetadata> getConverts(List<ConvertMetadata> potentialConverts) {
         if (getDescriptor().hasConverts(getAttributeName())) {
             return getDescriptor().getConverts(getAttributeName());
-        } else {
-            return potentialConverts;
         }
+        return potentialConverts;
     }
 
     /**
@@ -653,9 +651,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
             }
 
             return foreignKey;
-        } else {
-            return potentialForeignKey;
         }
+        return potentialForeignKey;
     }
 
     /**
@@ -677,9 +674,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     protected List<JoinColumnMetadata> getJoinColumns(List<JoinColumnMetadata> potentialJoinColumns, MetadataDescriptor descriptor) {
         if (getDescriptor().hasAssociationOverrideFor(getAttributeName())) {
             return getJoinColumnsAndValidate(getDescriptor().getAssociationOverrideFor(getAttributeName()).getJoinColumns(), descriptor);
-        } else {
-            return getJoinColumnsAndValidate(potentialJoinColumns, descriptor);
         }
+        return getJoinColumnsAndValidate(potentialJoinColumns, descriptor);
     }
 
     /**
@@ -846,9 +842,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     protected List<ConvertMetadata> getMapKeyConverts(List<ConvertMetadata> potentialMapKeyConverts) {
         if (getDescriptor().hasMapKeyConverts(getAttributeName())) {
             return getDescriptor().getMapKeyConverts(getAttributeName());
-        } else {
-            return potentialMapKeyConverts;
         }
+        return potentialMapKeyConverts;
     }
 
     /**
@@ -901,9 +896,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
             }
 
             return referenceClass;
-        } else {
-            return getMetadataClass(void.class);
         }
+        return getMetadataClass(void.class);
     }
 
     /**
@@ -944,9 +938,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
             // If the class doesn't exist the factory we'll just return a
             // generic MetadataClass
             return getMetadataClass(getAttributeType());
-        } else {
-            return getAccessibleObject().getRawClass(getDescriptor());
         }
+        return getAccessibleObject().getRawClass(getDescriptor());
     }
 
     /**
@@ -963,9 +956,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
             // If the class doesn't exist the factory we'll just return a
             // generic MetadataClass
             return getMetadataClass(getAttributeType());
-        } else {
-            return getAccessibleObject().getRawClassWithGenerics(getDescriptor());
         }
+        return getAccessibleObject().getRawClassWithGenerics(getDescriptor());
     }
 
     /**
@@ -2252,9 +2244,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     public boolean usesPropertyAccess() {
         if (hasAccess()) {
             return getAccess().equals(JPA_ACCESS_PROPERTY);
-        } else {
-            return hasAccessMethods() ? !usesVirtualAccess() : m_classAccessor.usesPropertyAccess();
         }
+        return hasAccessMethods() ? !usesVirtualAccess() : m_classAccessor.usesPropertyAccess();
     }
 
     /**
@@ -2266,9 +2257,8 @@ public abstract class MappingAccessor extends MetadataAccessor {
     public boolean usesVirtualAccess() {
         if (hasAccess()) {
             return getAccess().equals(EL_ACCESS_VIRTUAL);
-        } else {
-            return m_classAccessor.usesVirtualAccess();
         }
+        return m_classAccessor.usesVirtualAccess();
     }
 
     /**
@@ -2280,8 +2270,7 @@ public abstract class MappingAccessor extends MetadataAccessor {
     public boolean usesFieldAccess() {
         if (hasAccess()) {
             return getAccess().equals(JPA_ACCESS_FIELD);
-        } else {
-            return m_classAccessor.usesFieldAccess();
         }
+        return m_classAccessor.usesFieldAccess();
     }
 }

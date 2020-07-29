@@ -133,11 +133,11 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
     /**
      * Alias the supplied fields with respect to the expression node. Return copies of the fields
      */
-    protected Vector aliasFields(ObjectExpression node, Vector fields) {
-        Vector result = new Vector(fields.size());
+    protected Vector<DatabaseField> aliasFields(ObjectExpression node, Vector<DatabaseField> fields) {
+        Vector<DatabaseField> result = new Vector(fields.size());
 
-        for (Enumeration e = fields.elements(); e.hasMoreElements();) {
-            DatabaseField eachField = ((DatabaseField)e.nextElement()).clone();
+        for (Enumeration<DatabaseField> e = fields.elements(); e.hasMoreElements();) {
+            DatabaseField eachField = e.nextElement().clone();
             eachField.setTable(node.aliasForTable(eachField.getTable()));
             result.addElement(eachField);
         }
@@ -472,13 +472,13 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         if(!selectStatement.requiresAliases()) {
             return null;
         }
-        HashSet aliasTables = new HashSet();
-        Iterator itEntries = selectStatement.getTableAliases().entrySet().iterator();
+        HashSet<DatabaseTable> aliasTables = new HashSet<DatabaseTable>();
+        Iterator<Map.Entry<DatabaseTable, DatabaseTable>> itEntries = selectStatement.getTableAliases().entrySet().iterator();
         DatabaseTable aliasTable = null;
         while(itEntries.hasNext()) {
-            Map.Entry entry = (Map.Entry)itEntries.next();
+            Map.Entry<DatabaseTable, DatabaseTable> entry = itEntries.next();
             if(table.equals(entry.getValue())) {
-                aliasTable = (DatabaseTable)entry.getKey();
+                aliasTable = entry.getKey();
                 aliasTables.add(aliasTable);
             }
         }
@@ -514,14 +514,14 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         expIterator.iterateOn(selectStatement.getWhereClause());
 
         if(aliasTables.size() == 1) {
-            aliasTable = (DatabaseTable)aliasTables.iterator().next();
+            aliasTable = aliasTables.iterator().next();
             return aliasTable.getQualifiedName();
         } else if(aliasTables.isEmpty()) {
             // should never happen
             return aliasTable.getQualifiedName();
         } else {
             // should never happen
-            aliasTable = (DatabaseTable)aliasTables.iterator().next();
+            aliasTable = aliasTables.iterator().next();
             return aliasTable.getQualifiedName();
         }
     }
@@ -783,7 +783,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
     }
 
     protected SQLUpdateAllStatement buildUpdateAllStatement(DatabaseTable table,
-                HashMap databaseFieldsToValues,
+                HashMap<DatabaseField, Object> databaseFieldsToValues,
                 SQLCall selectCallForExist, SQLSelectStatement selectStatementForExist,
                 Collection primaryKeyFields)
     {
@@ -791,13 +791,13 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         updateAllStatement.setTable(table);
         updateAllStatement.setTranslationRow(getTranslationRow());
 
-        HashMap databaseFieldsToValuesCopy = new HashMap(databaseFieldsToValues.size());
-        HashMap databaseFieldsToTableAliases = null;
-        Iterator it = databaseFieldsToValues.entrySet().iterator();
+        HashMap<DatabaseField, Object> databaseFieldsToValuesCopy = new HashMap<DatabaseField, Object>(databaseFieldsToValues.size());
+        HashMap<DatabaseField, String> databaseFieldsToTableAliases = null;
+        Iterator<Map.Entry<DatabaseField, Object>> it = databaseFieldsToValues.entrySet().iterator();
         while(it.hasNext()) {
-            Map.Entry entry = (Map.Entry)it.next();
+            Map.Entry<DatabaseField, Object> entry = it.next();
             // for each table to be updated
-            DatabaseField field = (DatabaseField)entry.getKey();
+            DatabaseField field = entry.getKey();
             // here's a Map of left hand fields to right hand expressions
             Object value = entry.getValue();
             if(value instanceof SQLSelectStatement) {
@@ -805,7 +805,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
                 SQLCall selCall = (SQLCall)selStatement.buildCall(getSession());
                 databaseFieldsToValuesCopy.put(field, selCall);
                 if(databaseFieldsToTableAliases == null) {
-                    databaseFieldsToTableAliases = new HashMap();
+                    databaseFieldsToTableAliases = new HashMap<DatabaseField, String>();
                     updateAllStatement.setPrimaryKeyFieldsForAutoJoin(primaryKeyFields);
                 }
                 databaseFieldsToTableAliases.put(field, getAliasTableName(selStatement, table, getExecutionSession().getPlatform()));
@@ -1463,7 +1463,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
             }
 
             // Add statements for ManyToMany and DirectCollection mappings
-            List<SQLStatement> deleteStatementsForMappings = buildDeleteAllStatementsForMappings(selectCallForExist, selectStatementForExist, tablesToIgnore == null);
+            Vector<SQLDeleteStatement> deleteStatementsForMappings = buildDeleteAllStatementsForMappings(selectCallForExist, selectStatementForExist, tablesToIgnore == null);
             if(!deleteStatementsForMappings.isEmpty()) {
                 if(getSQLStatement() != null) {
                     getSQLStatements().add(getSQLStatement());
@@ -1498,10 +1498,10 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
                 tablesToIgnoreForChildren.addAll(tablesInInsertOrder);
             }
 
-            Iterator it = descriptor.getInheritancePolicy().getChildDescriptors().iterator();
+            Iterator<ClassDescriptor> it = descriptor.getInheritancePolicy().getChildDescriptors().iterator();
             while (it.hasNext()) {
                 // Define the same query for the child
-                ClassDescriptor childDescriptor = (ClassDescriptor)it.next();
+                ClassDescriptor childDescriptor = it.next();
 
                 // Most databases support delete cascade constraints by specifying a ON DELETE CASCADE option when defining foreign key constraints.
                 // However some databases which don't support foreign key constraints cannot use delete cascade constraints.
@@ -1573,8 +1573,8 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
      *
      * @return {@code Vector<SQLDeleteAllStatement>}
      */
-    protected Vector buildDeleteAllStatementsForMappings(SQLCall selectCallForExist, SQLSelectStatement selectStatementForExist, boolean dontCheckDescriptor) {
-        Vector deleteStatements = new Vector();
+    protected Vector<SQLDeleteStatement> buildDeleteAllStatementsForMappings(SQLCall selectCallForExist, SQLSelectStatement selectStatementForExist, boolean dontCheckDescriptor) {
+        Vector<SQLDeleteStatement> deleteStatements = new Vector<SQLDeleteStatement>();
         ClassDescriptor descriptor = getDescriptor();
         for (DatabaseMapping mapping : descriptor.getMappings()) {
             if (mapping.isForeignReferenceMapping()) {
@@ -1838,20 +1838,20 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         boolean useCache = (row == null || !(getQuery().shouldValidateUpdateCallCacheUse() && row.hasNullValueInFields()));
 
         // PERF: Check the descriptor update SQL call cache for a matching update with the same fields.
-        Vector updateCalls = getDescriptor().getQueryManager().getCachedUpdateCalls(getModifyRow().getFields());
+        Vector<DatasourceCall> updateCalls = getDescriptor().getQueryManager().getCachedUpdateCalls(getModifyRow().getFields());
         // If the calls were cached then don't need to prepare.
         if (updateCalls != null && useCache == true) {
             int updateCallsSize = updateCalls.size();
             if (updateCallsSize == 1) {
                 // clone call, to be able to set query on clone
-                DatasourceCall existingCall = (DatasourceCall)updateCalls.get(0);
+                DatasourceCall existingCall = updateCalls.get(0);
                 DatasourceCall clonedCall = (DatasourceCall)existingCall.clone();
                 setCall(clonedCall);
             } else {
                 // clone calls
                 Vector clonedCalls = new Vector(updateCallsSize);
                 for (int i = 0; i < updateCallsSize; i++) {
-                    DatasourceCall existingCall = (DatasourceCall)updateCalls.get(i);
+                    DatasourceCall existingCall = updateCalls.get(i);
                     clonedCalls.add(existingCall.clone());
                 }
                 setCalls(clonedCalls);
@@ -1917,7 +1917,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
     @Override
     public void prepareUpdateAll() {
         ExpressionBuilder builder = ((UpdateAllQuery)getQuery()).getExpressionBuilder();
-        HashMap updateClauses = ((UpdateAllQuery)getQuery()).getUpdateClauses();
+        HashMap<Object, Object> updateClauses = ((UpdateAllQuery)getQuery()).getUpdateClauses();
 
         boolean updateClausesHasBeenCloned = false;
         // Add a statement to update the optimistic locking field if their is one.
@@ -1951,12 +1951,9 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
             updateClauses.put(sopFieldExpression, new ConstantExpression(null, sopFieldExpression));
         }
 
-        HashMap tables_databaseFieldsToValues =  new HashMap();
-        HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields = new HashMap();
-        Iterator it = updateClauses.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry entry = (Map.Entry)it.next();
-
+        HashMap<DatabaseTable, HashMap> tables_databaseFieldsToValues =  new HashMap<DatabaseTable, HashMap>();
+        HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields = new HashMap<DatabaseTable, List<DatabaseField>>();
+        for(Map.Entry entry : updateClauses.entrySet()) {
             Object fieldObject = entry.getKey();
             DataExpression fieldExpression = null;
             Expression baseExpression = null; // QueryKeyExpression or FieldExpression of the field
@@ -2046,7 +2043,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
                     }
                 }
 
-                HashMap databaseFieldsToValues = (HashMap)tables_databaseFieldsToValues.get(table);
+                HashMap databaseFieldsToValues = tables_databaseFieldsToValues.get(table);
                 if(databaseFieldsToValues == null) {
                     databaseFieldsToValues = new HashMap();
                     tables_databaseFieldsToValues.put(table, databaseFieldsToValues);
@@ -2135,19 +2132,17 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
             }
         };
 
-        HashMap tables_databaseFieldsToValuesCopy = new HashMap();
-        it = tables_databaseFieldsToValues.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry entry = (Map.Entry)it.next();
-            DatabaseTable table = (DatabaseTable)entry.getKey();
-            HashMap databaseFieldsToValues = (HashMap)entry.getValue();
-            HashMap databaseFieldsToValuesCopy = new HashMap();
+        HashMap<DatabaseTable, HashMap<DatabaseField, Expression>> tables_databaseFieldsToValuesCopy = new HashMap<DatabaseTable, HashMap<DatabaseField, Expression>>();
+        for(Map.Entry<DatabaseTable, HashMap> entry : tables_databaseFieldsToValues.entrySet()) {
+            DatabaseTable table = entry.getKey();
+            HashMap<DatabaseField, Expression> databaseFieldsToValues = entry.getValue();
+            HashMap<DatabaseField, Expression> databaseFieldsToValuesCopy = new HashMap();
             tables_databaseFieldsToValuesCopy.put(table, databaseFieldsToValuesCopy);
-            Iterator itFieldsToValues = databaseFieldsToValues.entrySet().iterator();
+            Iterator<Map.Entry<DatabaseField, Expression>> itFieldsToValues = databaseFieldsToValues.entrySet().iterator();
             while(itFieldsToValues.hasNext()) {
-                Map.Entry entry2 = (Map.Entry)itFieldsToValues.next();
-                DatabaseField field = (DatabaseField)entry2.getKey();
-                Expression value = (Expression)entry2.getValue();
+                Map.Entry<DatabaseField, Expression> entry2 = itFieldsToValues.next();
+                DatabaseField field = entry2.getKey();
+                Expression value = entry2.getValue();
 
                 // initialize result with the table
                 expRequiresSelectIterator.setResult(table);
@@ -2175,9 +2170,9 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         tables_databaseFieldsToValues = tables_databaseFieldsToValuesCopy;
 
         if (tables_databaseFieldsToValues.size() == 1) {
-            Map.Entry entry = (Map.Entry)tables_databaseFieldsToValues.entrySet().iterator().next();
-            DatabaseTable table = (DatabaseTable)entry.getKey();
-            HashMap databaseFieldsToValues = (HashMap)entry.getValue();
+            Map.Entry<DatabaseTable, HashMap> entry = tables_databaseFieldsToValues.entrySet().iterator().next();
+            DatabaseTable table = entry.getKey();
+            HashMap databaseFieldsToValues = entry.getValue();
             Collection primaryKeyFields = tablesToPrimaryKeyFields.values().iterator().next();
             setSQLStatement(buildUpdateAllStatement(table, databaseFieldsToValues, selectCallForExist, selectStatementForExist, primaryKeyFields));
         } else {
@@ -2225,46 +2220,42 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
             };
 
             // This will hold collection of fields from selection criteria expression.
-            HashSet selectCallForExistFields = new HashSet();
+            HashSet<DatabaseField> selectCallForExistFields = new HashSet<DatabaseField>();
             if(selectCallForExist != null) {
                 expIterator.setResult(selectCallForExistFields);
                 expIterator.iterateOn(selectStatementForExist.getWhereClause());
             }
 
             // Left of the assignment operator that is - the fields acquiring new values
-            HashMap tablesToLeftFields = new HashMap();
+            HashMap<DatabaseTable, HashSet<DatabaseField>> tablesToLeftFields = new HashMap<DatabaseTable, HashSet<DatabaseField>>();
             // The fields right of the assignment operator AND the fields from whereClause
-            HashMap tablesToRightFields = new HashMap();
+            HashMap<DatabaseTable, HashSet<DatabaseField>> tablesToRightFields = new HashMap<DatabaseTable, HashSet<DatabaseField>>();
 
             // before and after vectors work together: n-th member of beforeTable should
             // be updated before than n-th member of afterTable
-            Vector beforeTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
-            Vector afterTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
+            Vector<DatabaseTable> beforeTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
+            Vector<DatabaseTable> afterTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
 
             // Both keys and values are tables.
             // An entry indicates a timing conflict between the key and the value:
             // both key should be updated before value and value before key.
-            HashMap simpleConflicts = new HashMap();
+            HashMap<DatabaseTable, DatabaseTable> simpleConflicts = new HashMap<DatabaseTable, DatabaseTable>();
 
-            it = tables_databaseFieldsToValues.entrySet().iterator();
-            while(it.hasNext()) {
-                Map.Entry entry = (Map.Entry)it.next();
+            for(Map.Entry<DatabaseTable, HashMap> entry : tables_databaseFieldsToValues.entrySet()) {
                 // for each table to be updated
-                DatabaseTable table = (DatabaseTable)entry.getKey();
+                DatabaseTable table = entry.getKey();
                 // here's a Map of left hand fields to right hand expressions
-                HashMap databaseFieldsToValues = (HashMap)entry.getValue();
+                HashMap<DatabaseField, Object> databaseFieldsToValues = entry.getValue();
 
                 // This will contain all the left hand fields
-                HashSet leftFields = new HashSet(databaseFieldsToValues.size());
+                HashSet<DatabaseField> leftFields = new HashSet<DatabaseField>(databaseFieldsToValues.size());
                 // This will contain all the left hand fields plus fields form selection criteria
-                HashSet rightFields = (HashSet)selectCallForExistFields.clone();
+                HashSet<DatabaseField> rightFields = (HashSet<DatabaseField>)selectCallForExistFields.clone();
                 expIterator.setResult(rightFields);
-                Iterator itDatabaseFieldsToValues = databaseFieldsToValues.entrySet().iterator();
-                while(itDatabaseFieldsToValues.hasNext()) {
-                    // for each left hand - right hand expression pair
-                    Map.Entry databaseFieldValueEntry = (Map.Entry)itDatabaseFieldsToValues.next();
+
+                for(Map.Entry<DatabaseField, Object> databaseFieldValueEntry : databaseFieldsToValues.entrySet()) {
                     // here's the left hand database field
-                    DatabaseField field = (DatabaseField)databaseFieldValueEntry.getKey();
+                    DatabaseField field = databaseFieldValueEntry.getKey();
                     leftFields.add(field);
                     // here's the right hand expression
                     Object value = databaseFieldValueEntry.getValue();
@@ -2283,23 +2274,19 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
                 }
 
                 // now let's compare the table with the already processed tables
-                Iterator itProcessedTables = tablesToLeftFields.keySet().iterator();
-                while(itProcessedTables.hasNext()) {
-                    DatabaseTable processedTable = (DatabaseTable)itProcessedTables.next();
-                    HashSet processedTableLeftFields = (HashSet)tablesToLeftFields.get(processedTable);
-                    HashSet processedTableRightFields = (HashSet)tablesToRightFields.get(processedTable);
+                for(DatabaseTable processedTable : tablesToLeftFields.keySet()) {
+                    HashSet<DatabaseField> processedTableLeftFields = tablesToLeftFields.get(processedTable);
+                    HashSet<DatabaseField> processedTableRightFields = tablesToRightFields.get(processedTable);
                     boolean tableBeforeProcessedTable = false;
-                    Iterator itProcessedTableLeftField = processedTableLeftFields.iterator();
-                    while(itProcessedTableLeftField.hasNext()) {
-                        if(rightFields.contains(itProcessedTableLeftField.next())) {
+                    for(DatabaseField field : processedTableLeftFields) {
+                        if(rightFields.contains(field)) {
                             tableBeforeProcessedTable = true;
                             break;
                         }
                     }
                     boolean processedTableBeforeTable = false;
-                    Iterator itLeftField = leftFields.iterator();
-                    while(itLeftField.hasNext()) {
-                        if(processedTableRightFields.contains(itLeftField.next())) {
+                    for(DatabaseField field : leftFields) {
+                        if(processedTableRightFields.contains(field)) {
                             processedTableBeforeTable = true;
                             break;
                         }
@@ -2328,7 +2315,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
             }
 
             // This will contain tables in update order
-            Vector orderedTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(tables_databaseFieldsToValues.size());
+            Vector<DatabaseTable> orderedTables = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(tables_databaseFieldsToValues.size());
             // first process the tables found in beforeTables / afterTables
             while(!beforeTables.isEmpty()) {
                 // Find firstTable - the one that appears in beforeTables, but not afterTables.
@@ -2363,9 +2350,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
 
             // now all the remaining ones - there are no dependencies between them
             // so the order is arbitrary.
-            Iterator itTables = tables_databaseFieldsToValues.keySet().iterator();
-            while(itTables.hasNext()) {
-                DatabaseTable table = (DatabaseTable)itTables.next();
+            for(DatabaseTable table : tables_databaseFieldsToValues.keySet()) {
                 if(!orderedTables.contains(table)) {
                     orderedTables.add(table);
                 }
@@ -2373,8 +2358,8 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
 
             // finally create statements
             for(int i=0; i < orderedTables.size(); i++) {
-                DatabaseTable table = (DatabaseTable)orderedTables.elementAt(i);
-                HashMap databaseFieldsToValues = (HashMap)tables_databaseFieldsToValues.get(table);
+                DatabaseTable table = orderedTables.elementAt(i);
+                HashMap databaseFieldsToValues = tables_databaseFieldsToValues.get(table);
                 Collection primaryKeyFields = tablesToPrimaryKeyFields.get(table);
                 getSQLStatements().addElement(buildUpdateAllStatement(table, databaseFieldsToValues, selectCallForExist, selectStatementForExist, primaryKeyFields));
             }
@@ -2384,8 +2369,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         super.prepareUpdateAll();
     }
 
-    protected SQLSelectStatement createSQLSelectStatementForUpdateAllForOracleAnonymousBlock(HashMap tables_databaseFieldsToValues)
-    {
+    protected SQLSelectStatement createSQLSelectStatementForUpdateAllForOracleAnonymousBlock(HashMap<Object, HashMap<Object, Expression>> tables_databaseFieldsToValues) {
         ExpressionBuilder builder = ((UpdateAllQuery)getQuery()).getExpressionBuilder();
         Expression whereClause = getSelectionCriteria();
 
@@ -2395,12 +2379,10 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         reportQuery.setSession(getSession());
 
         reportQuery.setShouldRetrievePrimaryKeys(true);
-        Iterator itDatabaseFieldsToValues = tables_databaseFieldsToValues.values().iterator();
-        while(itDatabaseFieldsToValues.hasNext()) {
-            HashMap databaseFieldsToValues = (HashMap)itDatabaseFieldsToValues.next();
-            Iterator itValues = databaseFieldsToValues.values().iterator();
-            while(itValues.hasNext()) {
-                reportQuery.addAttribute("", (Expression)itValues.next());
+
+        for(HashMap<Object, Expression> databaseFieldsToValues : tables_databaseFieldsToValues.values()) {
+            for(Expression itValues : databaseFieldsToValues.values()) {
+                reportQuery.addAttribute("", itValues);
             }
         }
 
@@ -2409,8 +2391,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         return selectStatement;
     }
 
-    protected SQLSelectStatement createSQLSelectStatementForModifyAllForTempTable(HashMap databaseFieldsToValues)
-    {
+    protected SQLSelectStatement createSQLSelectStatementForModifyAllForTempTable(HashMap<Object, Expression> databaseFieldsToValues) {
         ExpressionBuilder builder = ((ModifyAllQuery)getQuery()).getExpressionBuilder();
         Expression whereClause = getSelectionCriteria();
 
@@ -2421,9 +2402,8 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
 
         reportQuery.setShouldRetrievePrimaryKeys(true);
         if(databaseFieldsToValues != null) {
-            Iterator itValues = databaseFieldsToValues.values().iterator();
-            while(itValues.hasNext()) {
-                reportQuery.addAttribute("", (Expression)itValues.next());
+            for(Expression itValue: databaseFieldsToValues.values()) {
+                reportQuery.addAttribute("", itValue);
             }
         }
 
@@ -2448,7 +2428,7 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         return updateAllStatement;
     }
 
-    protected void prepareUpdateAllUsingTempStorage(HashMap tables_databaseFieldsToValues, HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields) {
+    protected void prepareUpdateAllUsingTempStorage(HashMap<DatabaseTable, HashMap> tables_databaseFieldsToValues, HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields) {
         if(getExecutionSession().getPlatform().supportsTempTables()) {
             prepareUpdateAllUsingTempTables(tables_databaseFieldsToValues, tablesToPrimaryKeyFields);
         } else if(getExecutionSession().getPlatform().isOracle()) {
@@ -2471,18 +2451,16 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
     /**
      * Pre-build the SQL statement from the expressions.
      */
-    protected void prepareUpdateAllUsingTempTables(HashMap tables_databaseFieldsToValues, HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields) {
+    protected void prepareUpdateAllUsingTempTables(HashMap<DatabaseTable, HashMap> tables_databaseFieldsToValues, HashMap<DatabaseTable, List<DatabaseField>> tablesToPrimaryKeyFields) {
         int nTables = tables_databaseFieldsToValues.size();
         Vector createTableStatements = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(nTables);
         Vector selectStatements = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(nTables);
         Vector updateStatements = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(nTables);
         Vector cleanupStatements = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(nTables);
 
-        Iterator itEntrySets = tables_databaseFieldsToValues.entrySet().iterator();
-        while(itEntrySets.hasNext()) {
-            Map.Entry entry = (Map.Entry)itEntrySets.next();
-            DatabaseTable table = (DatabaseTable)entry.getKey();
-            HashMap databaseFieldsToValues = (HashMap)entry.getValue();
+        for(Map.Entry<DatabaseTable, HashMap> entry: tables_databaseFieldsToValues.entrySet()) {
+            DatabaseTable table = entry.getKey();
+            HashMap databaseFieldsToValues = entry.getValue();
             List<DatabaseField> primaryKeyFields = tablesToPrimaryKeyFields.get(table);
 
             Vector statementsForTable = buildStatementsForUpdateAllForTempTables(table, databaseFieldsToValues, primaryKeyFields);
@@ -2674,30 +2652,26 @@ public class ExpressionQueryMechanism extends StatementQueryMechanism {
         return deleteStatement;
     }
 
-    protected Vector buildStatementsForUpdateAllForTempTables(DatabaseTable table, HashMap databaseFieldsToValues, List<DatabaseField> primaryKeyFields) {
+    protected Vector buildStatementsForUpdateAllForTempTables(DatabaseTable table, HashMap<Object, Object> databaseFieldsToValues, List<DatabaseField> primaryKeyFields) {
         Vector statements = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance(4);
 
-        Vector allFields = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
-        Iterator it = getDescriptor().getFields().iterator();
-        while(it.hasNext()) {
-            DatabaseField field = (DatabaseField)it.next();
+        Vector<DatabaseField> allFields = org.eclipse.persistence.internal.helper.NonSynchronizedVector.newInstance();
+        for(DatabaseField field : getDescriptor().getFields()) {
             if(table.equals(field.getTable())) {
                 allFields.add(field);
             }
         }
 
-        Collection assignedFields = databaseFieldsToValues.keySet();
-        HashMap databaseFieldsToValuesForInsert = databaseFieldsToValues;
-        Collection assignedFieldsForInsert = assignedFields;
+        Collection<Object> assignedFields = databaseFieldsToValues.keySet();
+        HashMap<Object, Object> databaseFieldsToValuesForInsert = databaseFieldsToValues;
+        Collection<Object> assignedFieldsForInsert = assignedFields;
 
         // The platform doesn't allow nulls in select clause.
         // Remove all the constant expressions with value null:
         // can do that because all fields initialized to null when temp. table created.
         if(!getExecutionSession().getPlatform().isNullAllowedInSelectClause()) {
-            databaseFieldsToValuesForInsert = new HashMap(databaseFieldsToValues.size());
-            Iterator itEntries = databaseFieldsToValues.entrySet().iterator();
-            while(itEntries.hasNext()) {
-                Map.Entry entry = (Map.Entry)itEntries.next();
+            databaseFieldsToValuesForInsert = new HashMap<Object, Object>(databaseFieldsToValues.size());
+            for(Map.Entry<Object, Object> entry : databaseFieldsToValues.entrySet()) {
                 if(entry.getValue() instanceof ConstantExpression) {
                     ConstantExpression constExp = (ConstantExpression)entry.getValue();
                     if(constExp.getValue() == null) {

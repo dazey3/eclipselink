@@ -14,7 +14,9 @@
 //     Oracle - initial API and implementation from Oracle TopLink
 package org.eclipse.persistence.testing.models.jpa.inherited;
 
-public class TelephoneNumberPK  {
+import java.io.Serializable;
+
+public class TelephoneNumberPK implements Serializable {
     public String type;
     protected String number;
     private String areaCode;

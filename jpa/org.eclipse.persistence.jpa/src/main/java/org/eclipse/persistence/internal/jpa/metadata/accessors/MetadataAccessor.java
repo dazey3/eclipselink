@@ -907,11 +907,6 @@ public abstract class MetadataAccessor extends ORMetadata {
             found = true;
             getProject().addPartitioningPolicy(new ValuePartitioningMetadata(annotation, this));
         }
-        annotation = getAnnotation(ValuePartitioning.class);
-        if (annotation != null) {
-            found = true;
-            getProject().addPartitioningPolicy(new ValuePartitioningMetadata(annotation, this));
-        }
         annotation = getAnnotation(PinnedPartitioning.class);
         if (annotation != null) {
             found = true;
