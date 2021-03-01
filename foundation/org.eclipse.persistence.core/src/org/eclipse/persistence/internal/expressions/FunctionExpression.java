@@ -528,21 +528,8 @@ public class FunctionExpression extends BaseExpression {
      * Print SQL using the operator.
      */
     public void printSQL(ExpressionSQLPrinter printer) {
-        // If all children are parameters, some databases don't allow binding.
-        if (printer.getPlatform().isDynamicSQLRequiredForFunctions() && !this.children.isEmpty()) {
-            boolean allParams = true;
-            for (Iterator<Expression> iterator = this.children.iterator(); iterator.hasNext(); ) {
-                Expression child = iterator.next();
-                if (!(child.isParameterExpression() || child.isConstantExpression())) {
-                    allParams = false;
-                }
-            }
-            if (allParams) {
-                printer.getCall().setUsesBinding(false);
-            }
-        }
-        ExpressionOperator realOperator;
-        realOperator = getPlatformOperator(printer.getPlatform());
+        // Get the ExpressionOperator that is overridden by the Platform class
+        ExpressionOperator realOperator = getPlatformOperator(printer.getPlatform());
         realOperator.printCollection(this.children, printer);
     }
 

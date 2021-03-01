@@ -2163,9 +2163,13 @@ public class ExpressionOperator implements Serializable {
      */
     public void printCollection(Vector items, ExpressionSQLPrinter printer) {
         // Certain functions don't allow binding on some platforms.
+        // Check the Platform first to see if 
+        // Check if this function Operator supports binding. 
+        // DatabasePlatform classes should override ExpressionOperator.
         if (printer.getPlatform().isDynamicSQLRequiredForFunctions() && !isBindingSupported()) {
             printer.getCall().setUsesBinding(false);
         }
+
         int dbStringIndex = 0;
         try {
             if (isPrefix()) {

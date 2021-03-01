@@ -359,7 +359,7 @@ public class DatasourcePlatform implements Platform {
     }
 
     /**
-     * Initialize any platform-specific operators
+     * Initialize any platform-specific operators and override existing operators
      */
     protected void initializePlatformOperators() {
         this.platformOperators = new HashMap();
@@ -449,7 +449,7 @@ public class DatasourcePlatform implements Platform {
         addOperator(ExpressionOperator.trunc());
         addOperator(ExpressionOperator.greatest());
         addOperator(ExpressionOperator.least());
-        
+
         addOperator(ExpressionOperator.standardDeviation());
         addOperator(ExpressionOperator.variance());
 

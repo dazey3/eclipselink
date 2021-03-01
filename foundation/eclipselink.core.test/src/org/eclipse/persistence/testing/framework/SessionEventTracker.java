@@ -415,6 +415,18 @@ public class SessionEventTracker implements SessionEventListener {
      * This event is raised after the execution of every query against the session.
      * The event contains the query and query result.
      */
+    public void postExecuteCall(SessionEvent event) {
+        if (!isTrackingEvent(event)) {
+            return;
+        }
+        log(event);
+    }
+
+    /**
+     * PUBLIC:
+     * This event is raised after the execution of every query against the session.
+     * The event contains the query and query result.
+     */
     public void postExecuteQuery(SessionEvent event) {
         if (!isTrackingEvent(event)) {
             return;
@@ -522,6 +534,18 @@ public class SessionEventTracker implements SessionEventListener {
      * This will be raised on nest units of work.
      */
     public void preCommitUnitOfWork(SessionEvent event) {
+        if (!isTrackingEvent(event)) {
+            return;
+        }
+        log(event);
+    }
+
+    /**
+     * PUBLIC:
+     * This event is raised before the execution of every query against the session.
+     * The event contains the query to be executed.
+     */
+    public void preExecuteCall(SessionEvent event) {
         if (!isTrackingEvent(event)) {
             return;
         }

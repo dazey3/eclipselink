@@ -1533,8 +1533,10 @@ public abstract class AbstractSession extends CoreAbstractSession<ClassDescripto
         if (query.getAccessors() == null) {
             query.setAccessors(getAccessors());
         }
+        Object result = null;
         try {
-            return basicExecuteCall(call, translationRow, query);
+            result = basicExecuteCall(call, translationRow, query);
+            return result;
         } finally {
             if (call.isFinished()) {
                 query.setAccessors(null);
@@ -2060,59 +2062,70 @@ public abstract class AbstractSession extends CoreAbstractSession<ClassDescripto
      */
     public Object basicExecuteCall(Call call, AbstractRecord translationRow, DatabaseQuery query) throws DatabaseException {
         Object result = null;
-        if (query.getAccessors().size() == 1) {
-            result = query.getAccessor().executeCall(call, translationRow, this);
-        } else {
-            RuntimeException exception = null;
-            // Replication or partitioning may require execution on multiple connections.
-            for (Accessor accessor : query.getAccessors()) {
-                Object object = null;
-                try {
-                    object = accessor.executeCall(call, translationRow, this);
-                } catch (RuntimeException failed) {
-                    // Catch any exceptions to allow execution on each connections.
-                    // This is used to have DDL run on every database even if one db fails because table already exists.
-                    if (exception == null) {
-                        exception = failed;
+
+        if (this.eventManager != null) {
+            this.eventManager.preExecuteCall(call);
+        }
+
+        try {
+            if (query.getAccessors().size() == 1) {
+                result = query.getAccessor().executeCall(call, translationRow, this);
+            } else {
+                RuntimeException exception = null;
+                // Replication or partitioning may require execution on multiple connections.
+                for (Accessor accessor : query.getAccessors()) {
+                    Object object = null;
+                    try {
+                        object = accessor.executeCall(call, translationRow, this);
+                    } catch (RuntimeException failed) {
+                        // Catch any exceptions to allow execution on each connections.
+                        // This is used to have DDL run on every database even if one db fails because table already exists.
+                        if (exception == null) {
+                            exception = failed;
+                        }
                     }
-                }
-                if (call.isOneRowReturned()) {
-                    // If one row is desired, then break on first hit.
-                    if (object != null) {
-                        result = object;
-                        break;
-                    }
-                } else if (call.isNothingReturned()) {
-                    // If no return ensure row count is consistent, 0 if any 0, otherwise first number.
-                    if (result == null) {
-                        result = object;
-                    } else {
-                        if (object instanceof Integer) {
-                            if (((Integer)result).intValue() != 0) {
-                                if (((Integer)object).intValue() != 0) {
-                                    result = object;
+                    if (call.isOneRowReturned()) {
+                        // If one row is desired, then break on first hit.
+                        if (object != null) {
+                            result = object;
+                            break;
+                        }
+                    } else if (call.isNothingReturned()) {
+                        // If no return ensure row count is consistent, 0 if any 0, otherwise first number.
+                        if (result == null) {
+                            result = object;
+                        } else {
+                            if (object instanceof Integer) {
+                                if (((Integer)result).intValue() != 0) {
+                                    if (((Integer)object).intValue() != 0) {
+                                        result = object;
+                                    }
                                 }
                             }
                         }
-                    }
-                } else {
-                    // Either a set of rows (union), or cursor (return).
-                    if (result == null) {
-                        result = object;
                     } else {
-                        if (object instanceof List) {
-                            ((List)result).addAll((List)object);
+                        // Either a set of rows (union), or cursor (return).
+                        if (result == null) {
+                            result = object;
                         } else {
-                            break; // Not sure what to do, so break (if a cursor, don't only want to open one cursor.
+                            if (object instanceof List) {
+                                ((List)result).addAll((List)object);
+                            } else {
+                                break; // Not sure what to do, so break (if a cursor, don't only want to open one cursor.
+                            }
                         }
-                    }                        
+                    }
+                }
+                if (exception != null) {
+                    throw exception;
                 }
             }
-            if (exception != null) {
-                throw exception;
+            return result;
+        } finally {
+            if (this.eventManager != null) {
+                this.eventManager.postExecuteCall(call, result);
             }
         }
-        return result;
     }
     
     /**

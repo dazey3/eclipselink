@@ -476,6 +476,19 @@ public class DB2Platform extends org.eclipse.persistence.platform.database.Datab
         addOperator(ExpressionOperator.simpleFunction(ExpressionOperator.ToDate, "DATE"));
         addOperator(ltrim2Operator());
         addOperator(rtrim2Operator());
+
+        // A whitelist of functions that support parameter binding for DB2
+        int[] validBindingFunctions = new int[] {
+                ExpressionOperator.Add,
+                ExpressionOperator.Subtract,
+                ExpressionOperator.Multiply,
+                ExpressionOperator.Divide
+        };
+
+        for(int o : validBindingFunctions) {
+            ExpressionOperator op = getOperator(o);
+            op.setIsBindingSupported(true);
+        }
     }
 
     @Override
@@ -738,7 +751,7 @@ public class DB2Platform extends org.eclipse.persistence.platform.database.Datab
     public boolean isNullAllowedInSelectClause() {
         return false;
     }
-    
+
     /**
      * INTERNAL
      * DB2 has some issues with using parameters on certain functions and relations.

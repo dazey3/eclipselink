@@ -130,6 +130,14 @@ public interface SessionEventListener extends CoreSessionEventListener {
 
     /**
      * PUBLIC:
+     * This event is raised after the execution of every call against the session.
+     * The event contains the call and call result.
+     * This differs from query execution in that the call has been translated.
+     */
+    public void postExecuteCall(SessionEvent event);
+
+    /**
+     * PUBLIC:
      * This event is raised after the execution of every query against the session.
      * The event contains the query and query result.
      */
@@ -195,6 +203,14 @@ public interface SessionEventListener extends CoreSessionEventListener {
      * This will be raised on nest units of work.
      */
     public void preCommitUnitOfWork(SessionEvent event);
+
+    /**
+     * PUBLIC:
+     * This event is raised before the execution of every call against the session.
+     * The event contains the call to be executed.
+     * This differs from query execution in that the call has been translated.
+     */
+    public void preExecuteCall(SessionEvent event);
 
     /**
      * PUBLIC:

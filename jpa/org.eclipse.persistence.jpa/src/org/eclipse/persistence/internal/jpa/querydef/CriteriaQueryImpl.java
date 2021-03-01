@@ -78,8 +78,8 @@ public class CriteriaQueryImpl<T> extends AbstractQueryImpl<T> implements Criter
      * @return the modified query
      */
     public CriteriaQuery<T> select(Selection<? extends T> selection) {
-        findRootAndParameters(selection);
         this.selection = (SelectionImpl) selection;
+        this.selection.findRootAndParameters(this);
         if (selection.isCompoundSelection()) {
             //bug 366386: validate that aliases are not reused
             if (this.selection.isCompoundSelection() && ((CompoundSelectionImpl)this.selection).getDuplicateAliasNames() != null) {
@@ -158,7 +158,7 @@ public class CriteriaQueryImpl<T> extends AbstractQueryImpl<T> implements Criter
             return this;
         }
         for (Selection select : selections) {
-            findRootAndParameters(select);
+            ((SelectionImpl)select).findRootAndParameters(this);
         }
         if (this.queryResult == ResultType.CONSTRUCTOR) {
             populateAndSetConstructorSelection(null, this.queryType, selections);

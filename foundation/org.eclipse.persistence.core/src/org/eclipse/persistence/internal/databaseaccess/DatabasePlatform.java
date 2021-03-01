@@ -65,6 +65,7 @@ import org.eclipse.persistence.exceptions.DatabaseException;
 import org.eclipse.persistence.exceptions.ValidationException;
 import org.eclipse.persistence.expressions.Expression;
 import org.eclipse.persistence.expressions.ExpressionBuilder;
+import org.eclipse.persistence.expressions.ExpressionOperator;
 import org.eclipse.persistence.internal.expressions.ExpressionSQLPrinter;
 import org.eclipse.persistence.internal.expressions.ParameterExpression;
 import org.eclipse.persistence.internal.expressions.SQLSelectStatement;
@@ -3417,7 +3418,7 @@ public class DatabasePlatform extends DatasourcePlatform {
     public boolean isDynamicSQLRequiredForFunctions() {
         return false;
     }
-    
+
     /**
      * INTERNAL:
      * Platforms that support java.sql.Ref may override this method.
